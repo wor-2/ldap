@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: openldap-ad
+    hostname: openldap
+    ports:
+      - "389:389"
+      - "636:636"
+    environment:
+      LDAP_ORGANISATION: "AD Manager"
+      LDAP_DOMAIN: "admanager.local"
+      LDAP_BASE_DN: "dc=admanager,dc=local"
+      LDAP_ADMIN_USERNAME: "admin"
+      LDAP_ADMIN_PASSWORD: "Admin@1234"
+      LDAP_CONFIG_PASSWORD: "Config@1234"
+      LDAP_TLS: "true"
+      LDAP_TLS_CRT_FILENAME: "ldap.crt"
+      LDAP_TLS_KEY_FILENAME: "ldap.key"
+      LDAP_TLS_CA_CRT_FILENAME: "ca.crt"
+      LDAP_TLS_VERIFY_CLIENT: "never"
+      LDAP_TLS_CIPHER_SUITE: "NORMAL:!VERS-SSL3.0"
+      LDAP_READONLY_USER: "false"
+      LDAP_RFC2307BIS_SCHEMA: "false"
+      LDAP_BACKEND: "mdb"
+      KEEP_EXISTING_CONFIG: "false"
+      LDAP_REMOVE_CONFIG_AFTER_SETUP: "true"
+    volumes:
+      - openldap-data:/var/lib/ldap
+      - openldap-config:/etc/ldap/slapd.d
+      - ./ldap/bootstrap:/container/service/slapd/assets/config/bootstrap/ldif/custom
+    command: --copy-service --loglevel warning
+    networks:
+      - admanager-net
+    restart: unless-stopped
+
+  phpldapadmin:
+    image: osixia/phpldapadmin:0.9.0
+    container_name: phpldapadmin
+    hostname: phpldapadmin
+    ports:
+      - "8081:443"
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: openldap
+      PHPLDAPADMIN_HTTPS: "true"
+    depends_on:
+      - openldap
+    networks:
+      - admanager-net
+    restart: unless-stopped
+
+volumes:
+  openldap-data:
+    driver: local
+  openldap-config:
+    driver: local
+
+networks:
+  admanager-net:
+    driver: bridge

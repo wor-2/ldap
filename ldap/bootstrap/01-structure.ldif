@@ -1,0 +1,100 @@
+# =============================================
+# AD Manager - Bootstrap LDAP Structure
+# Base DN: dc=admanager,dc=local
+# =============================================
+
+# --- Organizational Units ---
+dn: ou=Users,dc=admanager,dc=local
+objectClass: organizationalUnit
+ou: Users
+description: All managed users
+
+dn: ou=Groups,dc=admanager,dc=local
+objectClass: organizationalUnit
+ou: Groups
+description: All managed groups
+
+dn: ou=SuperUsers,dc=admanager,dc=local
+objectClass: organizationalUnit
+ou: SuperUsers
+description: Super administrators
+
+# --- Super User Account ---
+dn: uid=superuser,ou=SuperUsers,dc=admanager,dc=local
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: superuser
+cn: Super User
+sn: User
+givenName: Super
+mail: superuser@admanager.local
+userPassword: Admin@1234
+telephoneNumber: +1-555-0001
+description: Primary Super Administrator
+
+# --- Sample Users ---
+dn: uid=jdoe,ou=Users,dc=admanager,dc=local
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: jdoe
+cn: John Doe
+sn: Doe
+givenName: John
+mail: jdoe@admanager.local
+userPassword: Password@123
+telephoneNumber: +1-555-0002
+description: Sample user
+
+dn: uid=asmith,ou=Users,dc=admanager,dc=local
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: asmith
+cn: Alice Smith
+sn: Smith
+givenName: Alice
+mail: asmith@admanager.local
+userPassword: Password@123
+telephoneNumber: +1-555-0003
+description: Sample user
+
+dn: uid=bjohnson,ou=Users,dc=admanager,dc=local
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: bjohnson
+cn: Bob Johnson
+sn: Johnson
+givenName: Bob
+mail: bjohnson@admanager.local
+userPassword: Password@123
+telephoneNumber: +1-555-0004
+description: Sample user
+
+# --- Sample Groups ---
+dn: cn=Developers,ou=Groups,dc=admanager,dc=local
+objectClass: top
+objectClass: groupOfNames
+cn: Developers
+description: Software development team
+member: uid=jdoe,ou=Users,dc=admanager,dc=local
+
+dn: cn=Administrators,ou=Groups,dc=admanager,dc=local
+objectClass: top
+objectClass: groupOfNames
+cn: Administrators
+description: System administrators group
+member: uid=superuser,ou=SuperUsers,dc=admanager,dc=local
+
+dn: cn=ReadOnly,ou=Groups,dc=admanager,dc=local
+objectClass: top
+objectClass: groupOfNames
+cn: ReadOnly
+description: Read-only access group
+member: uid=asmith,ou=Users,dc=admanager,dc=local
