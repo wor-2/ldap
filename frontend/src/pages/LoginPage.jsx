@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
-import { Shield, User, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import {
+  Shield,
+  User,
+  Lock,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  KeyRound,
+  CheckCircle2,
+} from 'lucide-react';
 import authService from '../services/authService';
 import useAuthStore from '../store/authStore';
 import { useToast } from '../components/Toast';
@@ -17,41 +26,8 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Floating orbs animation keyframes definition via style tag or injected inline
-  useEffect(() => {
-    const styleId = 'login-animations';
-    if (!document.getElementById(styleId)) {
-      const styleEl = document.createElement('style');
-      styleEl.id = styleId;
-      styleEl.innerHTML = `
-        @keyframes floatOrb1 {
-          0%, 100% {
-            transform: translate(0px, 0px) scale(1);
-          }
-          33% {
-            transform: translate(40px, -60px) scale(1.1);
-          }
-          66% {
-            transform: translate(-30px, 40px) scale(0.95);
-          }
-        }
-        @keyframes floatOrb2 {
-          0%, 100% {
-            transform: translate(0px, 0px) scale(1);
-          }
-          33% {
-            transform: translate(-50px, 50px) scale(1.08);
-          }
-          66% {
-            transform: translate(35px, -45px) scale(0.92);
-          }
-        }
-      `;
-      document.head.appendChild(styleEl);
-    }
-  }, []);
-
-  if (isAuthenticated()) {
+  // If already authenticated, redirect immediately to dashboard
+  if (isAuthenticated && isAuthenticated()) {
     return <Navigate to="/" replace />;
   }
 
@@ -59,39 +35,40 @@ const LoginPage = () => {
     e.preventDefault();
     setErrorMessage('');
 
-    if (!username.trim() || !password) {
-      setErrorMessage('Please enter both username and password.');
+    const trimmedUser = username.trim();
+    if (!trimmedUser || !password) {
+      setErrorMessage('Please provide both username and password.');
       return;
     }
 
     setLoading(true);
 
     try {
-      const res = await authService.login(username.trim(), password);
+      const res = await authService.login(trimmedUser, password);
       const resData = res.data?.data || res.data;
 
       const token = resData.token || resData.jwt || resData.accessToken;
+      if (!token) {
+        throw new Error('Authentication failed: no access token was returned.');
+      }
+
       const user = {
-        username: resData.username || username.trim(),
+        username: resData.username || trimmedUser,
         role: resData.role || 'SUPER_USER',
-        displayName: resData.displayName || resData.name || username.trim(),
+        displayName: resData.displayName || resData.name || trimmedUser,
         email: resData.email || '',
       };
-
-      if (!token) {
-        throw new Error('No authentication token received from server.');
-      }
 
       setAuth(token, user);
       addToast(`Welcome back, ${user.displayName}!`, 'success');
       navigate('/', { replace: true });
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('Sign-in error:', err);
       const msg =
         err.response?.data?.message ||
         err.response?.data?.error ||
         err.message ||
-        'Authentication failed. Please verify your credentials.';
+        'Authentication failed. Please verify credentials.';
       setErrorMessage(msg);
       addToast(msg, 'error');
     } finally {
@@ -105,95 +82,123 @@ const LoginPage = () => {
         position: 'relative',
         minHeight: '100vh',
         width: '100vw',
-        overflow: 'hidden',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#0a0f1e',
-        padding: '20px',
+        background: 'var(--bg-primary)',
+        padding: '24px',
+        overflow: 'hidden',
       }}
     >
-      {/* Background Animated Gradient Orb 1 (Cyan) */}
+      {/* Animated Floating Orb 1: Large Cyan (Top-Left) */}
       <div
+        aria-hidden="true"
         style={{
           position: 'absolute',
-          top: '15%',
-          left: '20%',
-          width: '450px',
-          height: '450px',
+          top: '6%',
+          left: '12%',
+          width: '420px',
+          height: '420px',
           borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(0, 212, 255, 0.22) 0%, rgba(0, 212, 255, 0) 70%)',
-          filter: 'blur(60px)',
-          animation: 'floatOrb1 16s ease-in-out infinite',
+          filter: 'blur(70px)',
+          animation: 'float 8s ease-in-out infinite',
           pointerEvents: 'none',
           zIndex: 0,
         }}
       />
 
-      {/* Background Animated Gradient Orb 2 (Violet) */}
+      {/* Animated Floating Orb 2: Violet (Bottom-Right) */}
       <div
+        aria-hidden="true"
         style={{
           position: 'absolute',
-          bottom: '15%',
-          right: '20%',
-          width: '500px',
-          height: '500px',
+          bottom: '6%',
+          right: '10%',
+          width: '480px',
+          height: '480px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(124, 58, 237, 0.25) 0%, rgba(124, 58, 237, 0) 70%)',
-          filter: 'blur(70px)',
-          animation: 'floatOrb2 18s ease-in-out infinite',
+          background: 'radial-gradient(circle, rgba(124, 58, 237, 0.24) 0%, rgba(124, 58, 237, 0) 70%)',
+          filter: 'blur(80px)',
+          animation: 'floatSlow 12s ease-in-out infinite',
           pointerEvents: 'none',
           zIndex: 0,
         }}
       />
 
-      {/* Login Card */}
+      {/* Animated Floating Orb 3: Small Cyan (Center-Right) */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: '36%',
+          right: '24%',
+          width: '220px',
+          height: '220px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(0, 212, 255, 0.16) 0%, rgba(0, 212, 255, 0) 70%)',
+          filter: 'blur(45px)',
+          animation: 'floatReverse 6s ease-in-out infinite',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+
+      {/* Glassmorphism Card */}
       <div
         className="glass fade-in"
         style={{
           position: 'relative',
           zIndex: 1,
           width: '100%',
-          maxWidth: '440px',
-          padding: '40px',
-          borderRadius: '20px',
-          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 212, 255, 0.1)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          maxWidth: '400px',
+          padding: '36px 32px',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: 'var(--shadow-lg), var(--shadow-cyan)',
+          border: '1px solid var(--border)',
+          background: 'rgba(10, 16, 32, 0.85)',
+          backdropFilter: 'blur(28px)',
+          WebkitBackdropFilter: 'blur(28px)',
         }}
       >
-        {/* Header & Logo */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        {/* Brand Header */}
+        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <div
             style={{
-              width: '64px',
-              height: '64px',
-              margin: '0 auto 16px auto',
-              borderRadius: '16px',
-              background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(124, 58, 237, 0.2))',
-              border: '1px solid rgba(0, 212, 255, 0.4)',
-              display: 'flex',
+              width: '56px',
+              height: '56px',
+              borderRadius: '14px',
+              background: 'var(--gradient)',
+              display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 0 25px rgba(0, 212, 255, 0.25)',
+              marginBottom: '16px',
+              boxShadow: '0 0 24px rgba(0, 212, 255, 0.35)',
             }}
           >
-            <Shield size={36} color="#00d4ff" />
+            <Shield size={30} color="#ffffff" strokeWidth={2.2} />
           </div>
 
           <h1
+            className="gradient-text"
             style={{
-              fontSize: '1.85rem',
+              fontSize: '1.75rem',
               fontWeight: 800,
-              background: 'linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              lineHeight: 1.2,
               marginBottom: '6px',
               letterSpacing: '-0.02em',
             }}
           >
             AD Manager
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 500 }}>
+          <p
+            className="text-muted"
+            style={{
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              letterSpacing: '0.02em',
+            }}
+          >
             Active Directory Control Panel
           </p>
         </div>
@@ -202,10 +207,10 @@ const LoginPage = () => {
         {errorMessage && (
           <div
             style={{
-              background: 'rgba(239, 68, 68, 0.12)',
+              background: 'rgba(239, 68, 68, 0.1)',
               border: '1px solid rgba(239, 68, 68, 0.3)',
-              borderRadius: '8px',
-              padding: '12px 14px',
+              borderRadius: 'var(--radius-sm)',
+              padding: '11px 14px',
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
@@ -213,39 +218,30 @@ const LoginPage = () => {
               color: '#f87171',
               fontSize: '0.85rem',
               fontWeight: 500,
+              animation: 'fadeIn 0.25s ease',
             }}
           >
             <AlertCircle size={18} style={{ flexShrink: 0 }} />
-            <span>{errorMessage}</span>
+            <span style={{ lineHeight: 1.4 }}>{errorMessage}</span>
           </div>
         )}
 
-        {/* Login Form */}
+        {/* Sign In Form */}
         <form onSubmit={handleSubmit}>
-          {/* Username */}
+          {/* Username Field */}
           <div className="form-group">
-            <label className="label" htmlFor="username">
+            <label className="label" htmlFor="login-username">
               Username
             </label>
             <div className="input-wrapper">
-              <span
-                style={{
-                  position: 'absolute',
-                  left: '14px',
-                  color: '#64748b',
-                  display: 'flex',
-                  alignItems: 'center',
-                  pointerEvents: 'none',
-                }}
-              >
+              <span className="input-icon-left">
                 <User size={18} />
               </span>
               <input
-                id="username"
+                id="login-username"
                 type="text"
-                className="input-field"
+                className="input-field has-icon-left"
                 placeholder="Enter domain username"
-                style={{ paddingLeft: '42px' }}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
@@ -255,83 +251,104 @@ const LoginPage = () => {
             </div>
           </div>
 
-          {/* Password */}
-          <div className="form-group" style={{ marginBottom: '28px' }}>
-            <label className="label" htmlFor="password">
+          {/* Password Field */}
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label className="label" htmlFor="login-password">
               Password
             </label>
             <div className="input-wrapper">
-              <span
-                style={{
-                  position: 'absolute',
-                  left: '14px',
-                  color: '#64748b',
-                  display: 'flex',
-                  alignItems: 'center',
-                  pointerEvents: 'none',
-                }}
-              >
+              <span className="input-icon-left">
                 <Lock size={18} />
               </span>
               <input
-                id="password"
+                id="login-password"
                 type={showPassword ? 'text' : 'password'}
-                className="input-field"
+                className="input-field has-icon-left has-icon-right"
                 placeholder="Enter domain password"
-                style={{ paddingLeft: '42px', paddingRight: '42px' }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 disabled={loading}
               />
-              <span
-                className="input-icon"
+              <button
+                type="button"
+                className="input-icon-right"
                 onClick={() => setShowPassword(!showPassword)}
                 title={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </span>
+              </button>
             </div>
           </div>
 
           {/* Submit Button */}
           <button
             type="submit"
-            className="btn btn-primary"
+            className="btn btn-primary w-full"
             disabled={loading}
             style={{
-              width: '100%',
-              padding: '13px',
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              borderRadius: '8px',
+              padding: '12px 20px',
+              fontSize: '0.925rem',
+              fontWeight: 700,
+              borderRadius: 'var(--radius-sm)',
             }}
           >
             {loading ? (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
-                <span className="spinner"></span>
+                <span className="spinner spinner-sm"></span>
                 <span>Authenticating...</span>
               </span>
             ) : (
-              'Sign In to Console'
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                <KeyRound size={17} />
+                <span>Sign In to Console</span>
+              </span>
             )}
           </button>
         </form>
 
-        {/* Footer info */}
+        {/* Default Credentials Box */}
         <div
           style={{
-            marginTop: '28px',
-            textAlign: 'center',
-            fontSize: '0.78rem',
-            color: '#64748b',
+            marginTop: '26px',
+            padding: '12px 14px',
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: '0.76rem',
+            color: 'var(--text-muted)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '4px',
+            gap: '6px',
           }}
         >
-          <span>Authorized Super Users Only</span>
-          <span>LDAP / Active Directory Integration</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+            <CheckCircle2 size={13} color="var(--cyan)" />
+            <span>Default Test Credentials</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Username:</span>
+            <span className="code-text">admin</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Password:</span>
+            <span className="code-text">admin123</span>
+          </div>
+        </div>
+
+        {/* Security Notice */}
+        <div
+          style={{
+            marginTop: '16px',
+            textAlign: 'center',
+            fontSize: '0.72rem',
+            color: 'var(--text-hint)',
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+          }}
+        >
+          Secured with LDAP SSL / TLS & JWT
         </div>
       </div>
     </div>

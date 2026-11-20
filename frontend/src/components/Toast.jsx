@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 const ToastContext = createContext(null);
 
@@ -11,76 +11,53 @@ export const useToast = () => {
   return context;
 };
 
-const ToastItem = ({ toast, onRemove }) => {
+const ToastItem = ({ toast, onDismiss }) => {
   const { id, message, type = 'info', duration = 4000 } = toast;
+  const [isExiting, setIsExiting] = useState(false);
+
+  const handleClose = useCallback(() => {
+    setIsExiting(true);
+    setTimeout(() => {
+      onDismiss(id);
+    }, 280);
+  }, [id, onDismiss]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      onRemove(id);
+      handleClose();
     }, duration);
 
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [id, duration, onRemove]);
+    return () => clearTimeout(timer);
+  }, [duration, handleClose]);
 
-  const getIcon = () => {
+  const renderIcon = () => {
     switch (type) {
       case 'success':
-        return <CheckCircle size={20} color="#10b981" style={{ flexShrink: 0 }} />;
+        return <CheckCircle2 size={19} color="#10b981" className="toast-icon" />;
       case 'error':
-        return <XCircle size={20} color="#ef4444" style={{ flexShrink: 0 }} />;
+        return <XCircle size={19} color="#ef4444" className="toast-icon" />;
       case 'warning':
-        return <AlertTriangle size={20} color="#f59e0b" style={{ flexShrink: 0 }} />;
+        return <AlertTriangle size={19} color="#f59e0b" className="toast-icon" />;
       case 'info':
       default:
-        return <Info size={20} color="#00d4ff" style={{ flexShrink: 0 }} />;
+        return <Info size={19} color="#00d4ff" className="toast-icon" />;
     }
   };
 
   return (
     <div
-      className={`toast toast-${type}`}
+      className={`toast toast-${type} ${isExiting ? 'toast-exiting' : ''}`}
       role="alert"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '12px',
-      }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
-        {getIcon()}
-        <span
-          style={{
-            fontSize: '0.88rem',
-            color: '#e2e8f0',
-            wordBreak: 'break-word',
-            fontWeight: 500,
-          }}
-        >
-          {message}
-        </span>
-      </div>
+      {renderIcon()}
+      <div className="toast-message">{message}</div>
       <button
-        onClick={() => onRemove(id)}
-        style={{
-          background: 'transparent',
-          border: 'none',
-          color: '#94a3b8',
-          cursor: 'pointer',
-          padding: '4px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: '4px',
-          transition: 'color 0.2s',
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
-        onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+        type="button"
+        className="toast-close"
+        onClick={handleClose}
         aria-label="Close notification"
       >
-        <X size={16} />
+        <X size={15} />
       </button>
     </div>
   );
@@ -96,23 +73,22 @@ export const ToastProvider = ({ children }) => {
   const addToast = useCallback((message, type = 'info', duration = 4000) => {
     const id = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     const newToast = { id, message, type, duration };
-
     setToasts((prev) => [...prev, newToast]);
     return id;
   }, []);
 
-  const showSuccess = useCallback((msg, duration) => addToast(msg, 'success', duration), [addToast]);
-  const showError = useCallback((msg, duration) => addToast(msg, 'error', duration), [addToast]);
-  const showWarning = useCallback((msg, duration) => addToast(msg, 'warning', duration), [addToast]);
-  const showInfo = useCallback((msg, duration) => addToast(msg, 'info', duration), [addToast]);
+  const success = useCallback((msg, duration) => addToast(msg, 'success', duration), [addToast]);
+  const error = useCallback((msg, duration) => addToast(msg, 'error', duration), [addToast]);
+  const warning = useCallback((msg, duration) => addToast(msg, 'warning', duration), [addToast]);
+  const info = useCallback((msg, duration) => addToast(msg, 'info', duration), [addToast]);
 
   const contextValue = {
     addToast,
     removeToast,
-    success: showSuccess,
-    error: showError,
-    warning: showWarning,
-    info: showInfo,
+    success,
+    error,
+    warning,
+    info,
   };
 
   return (
@@ -120,7 +96,7 @@ export const ToastProvider = ({ children }) => {
       {children}
       <div className="toast-container" aria-live="polite">
         {toasts.map((toast) => (
-          <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
+          <ToastItem key={toast.id} toast={toast} onDismiss={removeToast} />
         ))}
       </div>
     </ToastContext.Provider>

@@ -151,22 +151,81 @@ App at **http://localhost:3000** — login with `superuser` / `Admin@1234`
 
 ## Production Deployment
 
-### 1. Prepare Secrets
+### Option A — Render + Supabase (Recommended Cloud)
+
+Deploy the backend as a **Render Web Service** and use **Supabase** as the managed PostgreSQL.
+
+#### 1. Backend on Render
+
+1. Push this repo to GitHub (already done ✅)
+2. Go to [render.com](https://render.com) → **New → Web Service**
+3. Connect the repo `wor-2/ldap`, set **Root Directory** to `backend`
+4. Configure the service:
+
+| Setting | Value |
+|---------|-------|
+| **Environment** | `Docker` |
+| **Dockerfile Path** | `backend/Dockerfile` |
+| **Port** | `8080` |
+
+#### 2. Environment Variables on Render
+
+Add these in **Dashboard → Environment**:
+
+```env
+# ── Database (Supabase) ─────────────────────────────────────────
+DATABASE_URL=jdbc:postgresql://db.eisgluyonwpnbstygjmj.supabase.co:5432/postgres?sslmode=require
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=<Supabase Dashboard → Settings → Database → DB password>
+
+# ── JWT ─────────────────────────────────────────────────────────
+JWT_SECRET=<run: openssl rand -base64 64>
+JWT_EXPIRATION_MS=86400000
+
+# ── LDAP ────────────────────────────────────────────────────────
+LDAP_HOST=<your OpenLDAP VPS IP or managed LDAP hostname>
+LDAP_PORT=636
+LDAP_BIND_DN=cn=admin,dc=admanager,dc=local
+LDAP_BIND_PASSWORD=Admin@1234
+LDAP_BASE_DN=dc=admanager,dc=local
+
+# ── Spring ──────────────────────────────────────────────────────
+SPRING_PROFILES_ACTIVE=prod
+SERVER_PORT=8080
+```
+
+> **Supabase SSL**: `?sslmode=require` in the JDBC URL is mandatory — Supabase rejects unencrypted connections.
+
+#### 3. Frontend on Render
+
+1. **New → Static Site**, root directory = `frontend`
+2. Build command: `npm install && npm run build`
+3. Publish directory: `dist`
+4. Add env var: `VITE_API_URL=https://<your-render-backend-url>`
+
+#### 4. Get Supabase Password
+
+1. [app.supabase.com](https://app.supabase.com) → your project
+2. **Settings → Database → Database password**
+3. Copy and paste as `POSTGRES_PASSWORD` in Render
+
+---
+
+### Option B — Docker Compose (Self-hosted / VPS)
+
+#### 1. Prepare Secrets
 
 ```powershell
-copy h:\ldap\.env.example h:\ldap\.env
+copy .env.example .env
 # Edit .env — set all passwords and generate JWT_SECRET:
 # openssl rand -base64 64
 ```
 
-### 2. Build & Launch
+#### 2. Build & Launch
 
 ```powershell
-cd h:\ldap
 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env up -d --build
 ```
-
-Starts everything including the compiled backend and nginx-served frontend.
 
 | Service | URL |
 |---------|-----|
@@ -182,20 +241,20 @@ Starts everything including the compiled backend and nginx-served frontend.
 
 ### Key Environment Variables
 
-| Variable | Dev Default | Description |
-|----------|-------------|-------------|
-| `LDAP_HOST` | `localhost` | LDAP server host |
-| `LDAP_PORT` | `636` | LDAPS port |
-| `LDAP_BIND_DN` | `cn=admin,dc=admanager,dc=local` | Admin DN |
-| `LDAP_BIND_PASSWORD` | `Admin@1234` | Admin password |
-| `LDAP_BASE_DN` | `dc=admanager,dc=local` | Search base |
-| `POSTGRES_DB` | `admanagerdb` | Database name |
-| `POSTGRES_USER` | `admanager` | DB username |
-| `POSTGRES_PASSWORD` | `AdManager@1234` | DB password |
-| `DATABASE_URL` | `jdbc:postgresql://localhost:5432/admanagerdb` | Full JDBC URL |
-| `JWT_SECRET` | (dev default) | Base64 HMAC secret (min 32 bytes) |
-| `JWT_EXPIRATION_MS` | `86400000` | Token TTL (default 24 h) |
-| `SPRING_PROFILES_ACTIVE` | — | Set to `prod` in production |
+| Variable | Dev Default | Render / Prod Value |
+|----------|-------------|---------------------|
+| `DATABASE_URL` | `jdbc:postgresql://localhost:5432/admanagerdb` | `jdbc:postgresql://db.eisgluyonwpnbstygjmj.supabase.co:5432/postgres?sslmode=require` |
+| `POSTGRES_USER` | `admanager` | `postgres` |
+| `POSTGRES_PASSWORD` | `AdManager@1234` | *(from Supabase Dashboard)* |
+| `JWT_SECRET` | *(dev default)* | *(run `openssl rand -base64 64`)* |
+| `JWT_EXPIRATION_MS` | `86400000` | `86400000` |
+| `LDAP_HOST` | `localhost` | Your OpenLDAP VPS IP / hostname |
+| `LDAP_PORT` | `636` | `636` |
+| `LDAP_BIND_DN` | `cn=admin,dc=admanager,dc=local` | *(same or your AD bind DN)* |
+| `LDAP_BIND_PASSWORD` | `Admin@1234` | *(your LDAP admin password)* |
+| `LDAP_BASE_DN` | `dc=admanager,dc=local` | *(same or your AD base DN)* |
+| `SPRING_PROFILES_ACTIVE` | — | `prod` |
+| `SERVER_PORT` | `8080` | `8080` |
 
 ### Connecting to Real Active Directory
 

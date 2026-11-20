@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
 const sizeMap = {
-  sm: '380px',
+  sm: '400px',
   md: '520px',
   lg: '680px',
   xl: '860px',
@@ -29,7 +29,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
 
   if (!isOpen) return null;
 
-  const maxWidth = sizeMap[size] || sizeMap.md;
+  const width = sizeMap[size] || sizeMap.md;
 
   return (
     <div
@@ -41,7 +41,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
     >
       <div
         className="modal-box"
-        style={{ width: '100%', maxWidth }}
+        style={{ width: '100%', maxWidth: width }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
@@ -53,12 +53,6 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
             className="btn-icon"
             onClick={onClose}
             aria-label="Close dialog"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#94a3b8',
-            }}
           >
             <X size={18} />
           </button>
