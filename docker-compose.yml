@@ -1,6 +1,46 @@
 version: '3.8'
 
 services:
+
+  # ─── PostgreSQL ───────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: admanager-postgres
+    hostname: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: admanagerdb
+      POSTGRES_USER: admanager
+      POSTGRES_PASSWORD: AdManager@1234
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admanager -d admanagerdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - admanager-net
+    restart: unless-stopped
+
+  # ─── pgAdmin (optional web UI for PostgreSQL) ─────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: admanager-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admanager.local
+      PGADMIN_DEFAULT_PASSWORD: Admin@1234
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - admanager-net
+    restart: unless-stopped
+
+  # ─── OpenLDAP ─────────────────────────────────────────────────────────────
   openldap:
     image: osixia/openldap:1.5.0
     container_name: openldap-ad
@@ -54,6 +94,8 @@ volumes:
   openldap-data:
     driver: local
   openldap-config:
+    driver: local
+  postgres-data:
     driver: local
 
 networks:
