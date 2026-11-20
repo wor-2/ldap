@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import javax.net.ssl.SSLSocketFactory;
+import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -112,6 +113,9 @@ public class AuthService {
             } catch (LDAPException e) {
                 auditService.log(username, "LOGIN", "USER", username, "Invalid credentials", "FAILURE");
                 throw new RuntimeException("Invalid username or password");
+            } catch (GeneralSecurityException e) {
+                auditService.log(username, "LOGIN", "USER", username, "SSL setup error: " + e.getMessage(), "FAILURE");
+                throw new RuntimeException("SSL configuration error. Please contact administrator.");
             }
             AppUser appUser = appUserRepository.findByUsername(username).orElseGet(() ->
                 AppUser.builder().username(username)
