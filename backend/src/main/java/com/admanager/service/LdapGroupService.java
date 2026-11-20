@@ -4,13 +4,15 @@ import com.admanager.dto.GroupDto;
 import com.unboundid.ldap.sdk.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 @Service @RequiredArgsConstructor @Slf4j
 public class LdapGroupService {
-    private final LDAPConnectionPool ldapConnectionPool;
+    @Autowired(required = false)
+    private LDAPConnectionPool ldapConnectionPool;
     @Value("${ldap.base-dn}") private String baseDn;
     @Value("${ldap.groups-ou}") private String groupsOu;
     public List<GroupDto> listGroups() throws LDAPException {

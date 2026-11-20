@@ -5,13 +5,15 @@ import com.admanager.repository.UserPermissionRepository;
 import com.unboundid.ldap.sdk.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 @Service @RequiredArgsConstructor @Slf4j
 public class LdapUserService {
-    private final LDAPConnectionPool ldapConnectionPool;
+    @Autowired(required = false)
+    private LDAPConnectionPool ldapConnectionPool;
     private final UserPermissionRepository userPermissionRepository;
     @Value("${ldap.base-dn}") private String baseDn;
     @Value("${ldap.users-ou}") private String usersOu;
